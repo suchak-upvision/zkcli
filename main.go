@@ -18,9 +18,9 @@ package main
 
 import (
 	"flag"
+	"github.com/jrossi/zookeepercli/output"
+	"github.com/jrossi/zookeepercli/zk"
 	"github.com/outbrain/golib/log"
-	"github.com/outbrain/zookeepercli/output"
-	"github.com/outbrain/zookeepercli/zk"
 	"io/ioutil"
 	"os"
 	"strings"

@@ -28,14 +28,10 @@ func PrintString(data []byte, formatType string) {
 
 	switch formatType {
 	case "txt":
-		{
-			fmt.Println(fmt.Sprintf("%s", data))
-		}
+		fmt.Println(fmt.Sprintf("%s", data))
 	case "json":
-		{
-			s, _ := json.Marshal(string(data))
-			fmt.Println(string(s))
-		}
+		s, _ := json.Marshal(string(data))
+		fmt.Println(string(s))
 	}
 }
 
@@ -44,13 +40,9 @@ func PrintStringArray(stringArray []string, formatType string) {
 
 	switch formatType {
 	case "txt":
-		{
-			fmt.Println(strings.Join(stringArray, "\n"))
-		}
+		fmt.Println(strings.Join(stringArray, "\n"))
 	case "json":
-		{
-			s, _ := json.Marshal(stringArray)
-			fmt.Println(string(s))
-		}
+		s, _ := json.Marshal(stringArray)
+		fmt.Println(string(s))
 	}
 }

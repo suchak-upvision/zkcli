@@ -79,71 +79,57 @@ func main() {
 	}
 	switch *command {
 	case "exists":
-		{
-			if exists, err := zk.Exists(path); err == nil && exists {
-				output.PrintString([]byte("true"), *format)
-			} else {
-				log.Fatale(err)
-			}
+		if exists, err := zk.Exists(path); err == nil && exists {
+			output.PrintString([]byte("true"), *format)
+		} else {
+			log.Fatale(err)
 		}
 	case "get":
-		{
-			if result, err := zk.Get(path); err == nil {
-				output.PrintString(result, *format)
-			} else {
-				log.Fatale(err)
-			}
+		if result, err := zk.Get(path); err == nil {
+			output.PrintString(result, *format)
+		} else {
+			log.Fatale(err)
 		}
 	case "ls":
-		{
-			if result, err := zk.Children(path); err == nil {
-				output.PrintStringArray(result, *format)
-			} else {
-				log.Fatale(err)
-			}
+		if result, err := zk.Children(path); err == nil {
+			output.PrintStringArray(result, *format)
+		} else {
+			log.Fatale(err)
 		}
 	case "lsr":
-		{
-			if result, err := zk.ChildrenRecursive(path); err == nil {
-				output.PrintStringArray(result, *format)
-			} else {
-				log.Fatale(err)
-			}
+		if result, err := zk.ChildrenRecursive(path); err == nil {
+			output.PrintStringArray(result, *format)
+		} else {
+			log.Fatale(err)
 		}
 	case "create":
-		{
-			if len(flag.Args()) < 2 {
-				log.Fatal("Expected data argument")
-			}
-			if result, err := zk.Create(path, []byte(flag.Arg(1)), *force); err == nil {
-				log.Infof("Created %+v", result)
-			} else {
-				log.Fatale(err)
-			}
+		if len(flag.Args()) < 2 {
+			log.Fatal("Expected data argument")
+		}
+		if result, err := zk.Create(path, []byte(flag.Arg(1)), *force); err == nil {
+			log.Infof("Created %+v", result)
+		} else {
+			log.Fatale(err)
 		}
 	case "set":
-		{
-			var info []byte
-			if len(flag.Args()) > 1 {
-				info = []byte(flag.Arg(1))
-			} else {
-				var err error
-				info, err = ioutil.ReadAll(os.Stdin)
-				if err != nil {
-					log.Fatale(err)
-				}
-			}
-			if result, err := zk.Set(path, info); err == nil {
-				log.Infof("Set %+v", result)
-			} else {
+		var info []byte
+		if len(flag.Args()) > 1 {
+			info = []byte(flag.Arg(1))
+		} else {
+			var err error
+			info, err = ioutil.ReadAll(os.Stdin)
+			if err != nil {
 				log.Fatale(err)
 			}
 		}
+		if result, err := zk.Set(path, info); err == nil {
+			log.Infof("Set %+v", result)
+		} else {
+			log.Fatale(err)
+		}
 	case "delete":
-		{
-			if err := zk.Delete(path); err != nil {
-				log.Fatale(err)
-			}
+		if err := zk.Delete(path); err != nil {
+			log.Fatale(err)
 		}
 	default:
 		log.Fatalf("Unknown command: %s", *command)

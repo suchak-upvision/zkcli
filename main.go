@@ -18,8 +18,8 @@ package main
 
 import (
 	"flag"
-	"github.com/jrossi/zookeepercli/output"
-	"github.com/jrossi/zookeepercli/zk"
+	"github.com/go-zkcli/zkcli/output"
+	"github.com/go-zkcli/zkcli/zk"
 	"github.com/outbrain/golib/log"
 	"io/ioutil"
 	"os"

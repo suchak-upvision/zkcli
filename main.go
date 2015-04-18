@@ -17,121 +17,170 @@
 package main
 
 import (
-	"flag"
 	"github.com/go-zkcli/zkcli/output"
 	"github.com/go-zkcli/zkcli/zk"
+
 	"github.com/outbrain/golib/log"
+
+	"github.com/codegangsta/cli"
 	"io/ioutil"
 	"os"
 	"strings"
 )
 
-// main is the application's entry point.
+var (
+	version = "1.1.0"
+)
+
 func main() {
-	servers := flag.String("servers", "", "srv1[:port1][,srv2[:port2]...]")
-	command := flag.String("c", "", "command, required (exists|get|ls|lsr|create|creater|set|delete)")
-	force := flag.Bool("force", false, "force operation")
-	format := flag.String("format", "txt", "output format (txt|json)")
-	verbose := flag.Bool("verbose", false, "verbose")
-	debug := flag.Bool("debug", false, "debug mode (very verbose)")
-	stack := flag.Bool("stack", false, "add stack trace upon error")
-	flag.Parse()
 
-	log.SetLevel(log.ERROR)
-	if *verbose {
-		log.SetLevel(log.INFO)
+	var format string
+	app := cli.NewApp()
+	app.Version = version
+	app.Name = "zkcli"
+	app.Usage = "zkcli is a non-interactive command line client for ZooKeeper"
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:   "servers",
+			Value:  "localhost:2181",
+			Usage:  "ZK Server list in format: srv1[:port1][,srv2[:port2]...]",
+			EnvVar: "ZKC_SERVERS",
+		},
+		cli.StringFlag{
+			Name:   "format",
+			Value:  "txt",
+			Usage:  "Output format",
+			EnvVar: "ZKC_FORMAT",
+		},
 	}
-	if *debug {
-		log.SetLevel(log.DEBUG)
-	}
-	if *stack {
-		log.SetPrintStackTrace(*stack)
-	}
+	app.Before = func(c *cli.Context) error {
+		if c.GlobalString("servers") == "" {
+			log.Fatal("Expected comma delimited list of servers via --servers|$ZKC_SERVERS")
+		}
+		serversArray := strings.Split(c.GlobalString("servers"), ",")
+		if len(serversArray) == 0 {
+			log.Fatal("Expected comma delimited list of servers via --servers")
+		}
+		zk.SetServers(serversArray)
 
-	log.Info("starting")
+		switch c.GlobalString("format") {
+		case "json", "txt":
+			format = c.GlobalString("format")
+		default:
+			log.Fatalf("Format %s is not in list: json,text", c.GlobalString("format"))
 
-	if *servers == "" {
-		log.Fatal("Expected comma delimited list of servers via --servers")
+		}
+		return nil
 	}
-	serversArray := strings.Split(*servers, ",")
-	if len(serversArray) == 0 {
-		log.Fatal("Expected comma delimited list of servers via --servers")
-	}
+	app.Commands = []cli.Command{
+		{
+			Name:        "exists",
+			Usage:       "zkcli excists <path>",
+			Description: "Does znode at <path> exist.  Exit with error code 0 if present code 1 if not.",
+			Action: func(c *cli.Context) {
+				if exists, err := zk.Exists(c.Args().First()); err == nil && exists {
+					output.PrintString([]byte("true"), format)
+				} else {
+					log.Fatale(err)
+				}
+			},
+		},
+		{
+			Name:        "get",
+			Usage:       "zkcli get <path>",
+			Description: "Get value on znode at <path>.",
+			Action: func(c *cli.Context) {
+				if result, err := zk.Get(c.Args().First()); err == nil {
+					output.PrintString(result, format)
+				} else {
+					log.Fatale(err)
+				}
 
-	if len(*command) == 0 {
-		log.Fatal("Expected command (-c) (exists|get|ls|lsr|create|creater|set|delete)")
-	}
+			},
+		},
+		{
+			Name:        "set",
+			Usage:       "zkcli set <path> [data]",
+			Description: "Set value on znode at <path>.  If data not present on cli it's read from stdin",
+			Action: func(c *cli.Context) {
+				var info []byte
+				if len(c.Args()) > 1 {
+					info = []byte(c.Args().Get(1))
+				} else {
+					var err error
+					info, err = ioutil.ReadAll(os.Stdin)
+					if err != nil {
+						log.Fatale(err)
+					}
+				}
+				if result, err := zk.Set(c.Args().Get(0), info); err == nil {
+					log.Infof("Set %+v", result)
+				} else {
+					log.Fatale(err)
+				}
 
-	if len(flag.Args()) < 1 {
-		log.Fatal("Expected path argument")
-	}
-	path := flag.Arg(0)
-	if *command == "ls" {
-	} else if strings.HasSuffix(path, "/") {
-		log.Fatal("Path must not end with '/'")
-	}
+			},
+		},
+		{
+			Name:        "create",
+			Usage:       "zkcli create [command options] <path> <data>",
+			Description: "Create data in znode at path",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "force",
+					Usage: "Force create",
+				},
+			},
+			Action: func(c *cli.Context) {
+				if len(c.Args()) < 2 {
+					log.Fatal("Expected data argument")
+				}
+				if result, err := zk.Create(c.Args().First(), []byte(c.Args().Get(1)), c.Bool("force")); err == nil {
+					log.Infof("Created %+v", result)
+				} else {
+					log.Fatale(err)
+				}
+			},
+		},
+		{
+			Name:        "list",
+			Aliases:     []string{"ls"},
+			Usage:       "zkcli list [command options] [path]",
+			Description: "list znode at [path]",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "recusive, r",
+					Usage: "Recusive list",
+				},
+			},
+			Action: func(c *cli.Context) {
+				x := zk.Children
+				if c.Bool("recusive") {
+					x = zk.ChildrenRecursive
+				}
+				if result, err := x(c.Args().First()); err == nil {
+					output.PrintStringArray(result, format)
+				} else {
+					log.Fatale(err)
+				}
 
-	zk.SetServers(serversArray)
-
-	if *command == "creater" {
-		*command = "create"
-		*force = true
+			},
+		},
+		{
+			Name:    "delete",
+			Aliases: []string{"del", "rm", "remove"},
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "force",
+					Usage: "Force delete",
+				},
+			},
+			Action: func(c *cli.Context) {
+				if err := zk.Delete(c.Args().First()); err != nil {
+					log.Fatale(err)
+				}
+			},
+		},
 	}
-	switch *command {
-	case "exists":
-		if exists, err := zk.Exists(path); err == nil && exists {
-			output.PrintString([]byte("true"), *format)
-		} else {
-			log.Fatale(err)
-		}
-	case "get":
-		if result, err := zk.Get(path); err == nil {
-			output.PrintString(result, *format)
-		} else {
-			log.Fatale(err)
-		}
-	case "ls":
-		if result, err := zk.Children(path); err == nil {
-			output.PrintStringArray(result, *format)
-		} else {
-			log.Fatale(err)
-		}
-	case "lsr":
-		if result, err := zk.ChildrenRecursive(path); err == nil {
-			output.PrintStringArray(result, *format)
-		} else {
-			log.Fatale(err)
-		}
-	case "create":
-		if len(flag.Args()) < 2 {
-			log.Fatal("Expected data argument")
-		}
-		if result, err := zk.Create(path, []byte(flag.Arg(1)), *force); err == nil {
-			log.Infof("Created %+v", result)
-		} else {
-			log.Fatale(err)
-		}
-	case "set":
-		var info []byte
-		if len(flag.Args()) > 1 {
-			info = []byte(flag.Arg(1))
-		} else {
-			var err error
-			info, err = ioutil.ReadAll(os.Stdin)
-			if err != nil {
-				log.Fatale(err)
-			}
-		}
-		if result, err := zk.Set(path, info); err == nil {
-			log.Infof("Set %+v", result)
-		} else {
-			log.Fatale(err)
-		}
-	case "delete":
-		if err := zk.Delete(path); err != nil {
-			log.Fatale(err)
-		}
-	default:
-		log.Fatalf("Unknown command: %s", *command)
-	}
+	app.Run(os.Args)
 }

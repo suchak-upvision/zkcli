@@ -6,8 +6,8 @@ build:
         name: go get        
         code: |
           go get -t ./...  
-    - tcnksm/goveralls:
-        token: $COVERALLS_TOKEN
+#    - tcnksm/goveralls:
+#        token: $COVERALLS_TOKEN
     - tcnksm/gox
     - tcnksm/zip:
         input: ${WERCKER_OUTPUT_DIR}/pkg

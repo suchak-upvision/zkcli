@@ -167,8 +167,10 @@ func main() {
 			},
 		},
 		{
-			Name:    "delete",
-			Aliases: []string{"del", "rm", "remove"},
+			Name:        "delete",
+			Aliases:     []string{"del", "rm", "remove"},
+			Usage:       "zkcli delete [command options] [path]",
+			Description: "delete znode at [path]",
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  "force",

@@ -171,3 +171,26 @@ func Delete(path string) error {
 
 	return connection.Delete(path, -1)
 }
+
+func DeleteAll(path string) error {
+	connection, err := connect()
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
+
+	all, err := ChildrenRecursive(path)
+	if err != nil {
+		return err
+	}
+
+	for i := len(all) - 1; i >= 0; i-- {
+		e := all[i]
+		err := connection.Delete(path+"/"+e, -1)
+		if err != nil {
+			return err
+		}
+	}
+
+	return connection.Delete(path, -1)
+}

@@ -55,7 +55,7 @@ GLOBAL OPTIONS:
     
 ```
 
-$ zkcli --servers srv-1,srv-2,srv-3 create /demo_only some_value
+$ zkcli --servers srv-1,srv-2,srv-3 -c create /demo_only some_value
 
 # Servers can also be define using environment varaible
 $ export ZKC_SERVERS=srv-1,srv-2,srv-3 
@@ -139,9 +139,3 @@ output as well as enhanced functionality.
 Release under the [Apache 2.0 license](https://github.com/go-zkcli/zkcli/blob/master/LICENSE)
 
 Authored by [Shlomi Noach](https://github.com/shlomi-noach) at [Outbrain](https://github.com/outbrain)
- 
- 
- 
- 
-
- 

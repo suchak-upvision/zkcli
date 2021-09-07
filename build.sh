@@ -6,14 +6,19 @@
 #
 
 release_version="1.0.5"
-release_dir=/tmp/zkcli
+release_dir=./binaries/
 rm -rf $release_dir/*
 mkdir -p $release_dir
 
 cd  $(dirname $0)
 for f in $(find . -name "*.go"); do go fmt $f; done
 
-GOPATH=/usr/share/golang:$(pwd)
+#GOPATH=/home/suchak/go:$(pwd)
+go mod init local/build
+go get github.com/urfave/cli@v1.22.1
+go get github.com/go-zkcli/zkcli/output
+go get github.com/go-zkcli/zkcli/zk
+go get github.com/outbrain/golib/log
 go build -o $release_dir/zkcli ./main.go
 
 if [[ $? -ne 0 ]] ; then

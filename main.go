@@ -22,7 +22,7 @@ import (
 
 	"github.com/outbrain/golib/log"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -179,23 +179,6 @@ func main() {
 			},
 			Action: func(c *cli.Context) {
 				if err := zk.Delete(c.Args().First()); err != nil {
-					log.Fatale(err)
-				}
-			},
-		},
-		{
-			Name:        "deleteall",
-			Aliases:     []string{"rmr"},
-			Usage:       "zkcli deleteall [command options] [path]",
-			Description: "delete znode at [path] with all its descendants",
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  "force",
-					Usage: "Force delete",
-				},
-			},
-			Action: func(c *cli.Context) {
-				if err := zk.DeleteAll(c.Args().First()); err != nil {
 					log.Fatale(err)
 				}
 			},
